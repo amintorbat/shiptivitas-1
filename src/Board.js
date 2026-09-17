@@ -10,9 +10,9 @@ export default class Board extends React.Component {
     const clients = this.getClients();
     this.state = {
       clients: {
-        backlog: clients.filter(client => !client.status || client.status === 'backlog'),
-        inProgress: clients.filter(client => client.status && client.status === 'in-progress'),
-        complete: clients.filter(client => client.status && client.status === 'complete'),
+        backlog: clients.map(client => ({...client, status:'backlog'})),
+        inProgress: [],
+        complete: [],
       }
     }
     this.swimlanes = {
@@ -21,6 +21,38 @@ export default class Board extends React.Component {
       complete: React.createRef(),
     }
   }
+  componentDidMount() {
+  const drake = Dragula([
+    this.swimlanes.backlog.current,
+    this.swimlanes.inProgress.current,
+    this.swimlanes.complete.current,
+  ]);
+
+  drake.on('drop', (el, target) => {
+    let newStatus;
+    let newClass;
+
+    if (target === this.swimlanes.backlog.current) {
+      newStatus = 'backlog';
+      newClass = 'Card-grey';
+    } else if (target === this.swimlanes.inProgress.current) {
+      newStatus = 'in-progress';
+      newClass = 'Card-blue';
+    } else if (target === this.swimlanes.complete.current) {
+      newStatus = 'complete';
+      newClass = 'Card-green';
+    }
+
+    if (!newStatus) {
+      return;
+    }
+
+    el.dataset.status = newStatus;
+
+    el.classList.remove('Card-grey', 'Card-blue', 'Card-green');
+    el.classList.add(newClass);
+  });
+}
   getClients() {
     return [
       ['1','Stark, White and Abbott','Cloned Optimal Architecture', 'in-progress'],
